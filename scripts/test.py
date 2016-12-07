@@ -79,6 +79,7 @@ def test_cpu_perc_limit():
     output = aucont.run_cmd(
         util.test_rootfs_path(), '/test/busyloop/bin/run.sh'
     ).strip()
+    util.debug(output)
     unlimited_result = int(output)
 
     output = aucont.run_cmd(
@@ -237,9 +238,9 @@ def main():
         test_host_user_uid_preserved()
 
         # test_cpu_perc_limit()
-        # test_basic_networking()
-        # test_webserver()
-        # test_many_cont_networks()
+        test_basic_networking()
+        test_webserver()
+        test_many_cont_networks()
 
         util.log('===== ALL TESTS ARE PASSED! =====')
 

@@ -46,6 +46,52 @@ namespace aucont_start
         }
     }
     
+    std::string inc_ip(const std::string& address_st)
+    {
+        in_addr_t address = inet_addr(address_st.c_str());
+        
+        address = ntohl(address);
+        address += 1;
+        address = htonl(address);
+        
+        struct in_addr address_struct;
+        address_struct.s_addr = address;
+        
+        return std::string(inet_ntoa(address_struct));
+    }
+
+    
+    void setup_container_net(const std::string& ip)
+    {
+        // sets device up
+        std::string set_link = "ip link set v1-" + ip + " up";
+        // adds ip addrs
+        std::string set_addr = "ip addr add " + ip + "/24 dev v1-" + ip;
+        // sets device up
+        std::string set_up = "ip link set lo up";
+        
+        system(set_link.c_str());
+        system(set_addr.c_str());
+        system(set_up.c_str());
+    }
+    
+    void setup_net(int pid, const input_parameters& params)
+    {
+        // creates veth pair
+        std::string add_device_fst = "sudo ip link add v0-" + params.m_ip + " type veth peer name v1-" + params.m_ip;
+        // sets device up
+        std::string set_fst_up = "sudo ip link set v0-" + params.m_ip + " up";
+        // connect namespaces
+        std::string set_fst_netns = "sudo ip link set v1-" + params.m_ip + " netns " + std::to_string(pid);
+        // assign ip
+        std::string set_device_addr = "sudo ip addr add " + inc_ip(params.m_ip) + "/24 dev v0-" + params.m_ip;
+        
+        system(add_device_fst.c_str());
+        system(set_fst_up.c_str());
+        system(set_fst_netns.c_str());
+        system(set_device_addr.c_str());
+    }
+    
     void remount_root(const std::string& path)
     {
         std::string prev_root = path + "/prev_root";
@@ -116,6 +162,10 @@ namespace aucont_start
         // configure
         setup_container_uts();
         setup_container_fs(parameters->m_image_path);
+        if (!parameters->m_ip.empty())
+        {
+            setup_container_net(parameters->m_ip);
+        }
         
         // SYNC_POINT
         parameters->write_snd(1);
@@ -199,6 +249,10 @@ int main(int argc, char* argv[])
     
     setup_user(created_pid);
     setup_cpu(created_pid, parameters);
+    if (!parameters.m_ip.empty())
+    {
+        setup_net(created_pid, parameters);
+    }
 
     // SYNC_POINT
     parameters.write_fst(42);
