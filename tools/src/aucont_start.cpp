@@ -99,7 +99,7 @@ namespace aucont_start
         mount(path.c_str(), path.c_str(), "bind", MS_BIND | MS_REC, NULL);
         syscall(SYS_pivot_root, path.c_str(), prev_root.c_str());
         chdir("/");
-        umount2("/old_root", MNT_DETACH); 
+        umount2("/prev_root", MNT_DETACH); 
     }
     
     void setup_container_fs(const std::string& path)
