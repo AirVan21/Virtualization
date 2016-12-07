@@ -48,44 +48,42 @@ namespace aucont_start
     
     void remount_root(const std::string& path)
     {
-        std::string old_root = path + "/old_root";
-        create_dir(old_root);
+        std::string prev_root = path + "/prev_root";
+        create_dir(prev_root);
         mount(path.c_str(), path.c_str(), "bind", MS_BIND | MS_REC, NULL);
-        syscall(SYS_pivot_root, path.c_str(), old_root.c_str());
+        syscall(SYS_pivot_root, path.c_str(), prev_root.c_str());
         chdir("/");
         umount2("/old_root", MNT_DETACH); 
     }
     
     void setup_container_fs(const std::string& path)
     {
-        unsigned long flags =  MS_NOSUID | MS_NODEV | MS_NOEXEC;
+        unsigned long flags =  MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_REC;
         
         std::string proc_dir = path + "/proc";
         create_dir(proc_dir);
         mount(NULL, proc_dir.c_str(), "auto", flags, NULL);
 
-        std::string sys = path + "/sys";
-        create_dir(sys);
-        mount(NULL, sys.c_str(), "auto", flags, NULL);
+        std::string sys_dir = path + "/sys";
+        create_dir(sys_dir);
+        mount(NULL, sys_dir.c_str(), "auto", flags, NULL);
         
-        std::string shm = path + "/dev/shm";
-        create_dir(shm);
-        mount("/dev/shm", shm.c_str(), "auto", flags, NULL);
+        std::string shm_dir = path + "/dev/shm";
+        create_dir(shm_dir);
+        mount("/dev/shm", shm_dir.c_str(), "auto", flags, NULL);
         
         // message
-        std::string mqueue = path + "/dev/mqueue";
-        create_dir(mqueue);
-        mount("/dev/mqueue", mqueue.c_str(), "auto", flags, NULL);
+        std::string mqueue_dir = path + "/dev/mqueue";
+        create_dir(mqueue_dir);
+        mount("/dev/mqueue", mqueue_dir.c_str(), "auto", flags, NULL);
         
-        
-        std::string zero = path + "/dev/zero";
-        mknod(zero.c_str(), 0777, 0);
-        mount("/dev/zero", zero.c_str(), "auto", flags, NULL);
+        std::string zero_dir = path + "/dev/zero";
+        mknod(zero_dir.c_str(), 0777, 0);
+        mount("/dev/zero", zero_dir.c_str(), "auto", flags, NULL);
 
-
-        std::string null = path + "/dev/null";
-        mknod(null.c_str(), 0777, 0);
-        mount("/dev/null", null.c_str(), "auto", flags, NULL);
+        std::string null_dir = path + "/dev/null";
+        mknod(null_dir.c_str(), 0777, 0);
+        mount("/dev/null", null_dir.c_str(), "auto", flags, NULL);
         
         remount_root(path);
     }
